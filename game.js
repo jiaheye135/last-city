@@ -1,6 +1,6 @@
 'use strict';
 const $=id=>document.getElementById(id),C=City;let state=C.initial(),selected=null,timer=null,hover=null,frame=0,tutorial=null,touchCell=null;
-const canvas=$('map'),ctx=canvas.getContext('2d');let W=800,H=460,scale=1,ox=400,oy=90;
+const canvas=$('map'),ctx=canvas.getContext('2d',{alpha:false});let W=800,H=460,scale=1,ox=400,oy=90;
 const camera=CityCamera.create(),pointers=new Map(),art=CityArt.renderer(ctx),buildBirths=new Map();let gesture=null,speakerIndex=0,celebratedAt=-Infinity,lastDraw=0,residentNote=null,resumeTutorial=false;
 function notice(text){$('toast').textContent=text;$('toast').style.display='block';clearTimeout(notice.t);notice.t=setTimeout(()=>$('toast').style.display='none',3000);}
 function pause(){clearInterval(timer);timer=null;$('play').textContent='▶ 自動推進';}
@@ -15,11 +15,13 @@ $('save').onclick=()=>{save();if(tutorial&&tutorial.step===6){tutorial.step=7;up
 $('export').onclick=()=>{let url=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=`last-city-day-${state.day}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};$('import').onclick=()=>$('file').click();$('file').onchange=async e=>{let file=e.target.files[0];if(!file)return;try{if(file.size>100000)throw Error('檔案過大');let next=C.validate(JSON.parse(await file.text()));pause();endTutorial(false);state=next;selected=null;resetScene();render();save(true);notice('已匯入城市');}catch(err){notice('匯入失敗：'+err.message);}e.target.value='';};
 $('restart').onclick=()=>{pause();if(confirm('重新開始城市？目前未儲存的進度將離開。')){endTutorial(false);state=C.initial();selected=null;resetScene();render();$('arrival').showModal();}};$('help').onclick=()=>$('guide').showModal();$('cancel').onclick=()=>{selected=null;render();};document.addEventListener('keydown',e=>{if(e.key==='Escape'){selected=null;render();}});$('ration').onchange=e=>{state.policy=e.target.checked?'ration':'normal';render();save(true);};
 function place(x,y){if(tutorial&&![3,4].includes(tutorial.step))return notice('先完成目前教學步驟，或選擇跳過教學');if(tutorial&&selected!==(tutorial.step===3?'farm':'solar'))return notice('請選擇教學提示的建築');if(!selected)return notice('請先選擇建築');let wasLit=state.opening?.status==='restored',type=selected;if(C.build(state,type,x,y)){buildBirths.set(x+','+y,performance.now()/1000);touchCell=null;render();save(true);reactToBuilding(type);if(!wasLit&&state.opening?.status==='restored')celebrateOpening();}else notice('無法建造：請確認空地、材料及遊戲狀態');}$('place').onclick=()=>place(Number($('bx').value)-1,Number($('by').value)-1);
-function resize(){let rect=canvas.getBoundingClientRect();W=rect.width;H=rect.height;let dpr=Math.min(devicePixelRatio||1,2);canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);updateCamera();}
+const surface=CitySurface.create(canvas,ctx,size=>{W=size.width;H=size.height;updateCamera();paint(performance.now());});
+function resize(){surface.resize(Math.min(devicePixelRatio||1,2));}
 function updateCamera(){({scale,ox,oy}=CityCamera.layout(camera,W,H));$('zoom-level').textContent=Math.round(camera.zoom*100)+'%';}
 function zoom(factor,x=W/2,y=H/2){CityCamera.zoomAt(camera,factor,x,y,W,H);updateCamera();}
 $('zoom-in').onclick=()=>zoom(1.25);$('zoom-out').onclick=()=>zoom(.8);$('map-reset').onclick=()=>{Object.assign(camera,CityCamera.create());updateCamera();};
-function draw(timestamp=0){requestAnimationFrame(draw);if(timestamp-lastDraw<32)return;lastDraw=timestamp;let reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;art.draw({state,w:W,h:H,scale,ox,oy,time:reduced?0:timestamp/1000,focus:touchCell||hover,selected,speakerIndex,transition:reduced?1:Math.min(1,Math.max(0,(timestamp/1000-celebratedAt)/3)),buildBirths});}
+function draw(timestamp=0){requestAnimationFrame(draw);if(timestamp-lastDraw<32)return;lastDraw=timestamp;paint(timestamp);}
+function paint(timestamp){let reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;art.draw({state,w:W,h:H,scale,ox,oy,time:reduced?0:timestamp/1000,focus:touchCell||hover,selected,speakerIndex,transition:reduced?1:Math.min(1,Math.max(0,(timestamp/1000-celebratedAt)/3)),buildBirths});}
 function point(e){let r=canvas.getBoundingClientRect(),dx=(e.clientX-r.left-ox)/(30*scale),dy=(e.clientY-r.top-oy)/(15*scale),x=Math.round((dy+dx)/2),y=Math.round((dy-dx)/2);return x>=0&&y>=0&&x<9&&y<9?{x,y}:null;}
 function updateTouchBuild(){
  if(!selected)touchCell=null;
@@ -96,5 +98,5 @@ $('tutorial-skip').onclick=()=>{endTutorial();notice('已離開教學，可隨�
 $('tutorial-next').onclick=()=>{if(!tutorial)return;if(tutorial.step===7){endTutorial();notice('教學完成，接下來由你帶領城市');}else{tutorial.step++;updateTutorial();}};
 $('tutorial-locate').onclick=()=>{if(!tutorial)return;let target=document.querySelector('.tutorial-focus');target?.scrollIntoView({behavior:'smooth',block:'center'});};
 
-window.addEventListener('resize',resize);document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});render();resize();draw();
+window.addEventListener('resize',resize);if(typeof ResizeObserver!=='undefined')new ResizeObserver(resize).observe(canvas);document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else{resize();paint(performance.now());}});render();resize();draw();
 try{$('arrival-load').hidden=!localStorage.getItem('last-city-v1');if(!localStorage.getItem('last-city-arrival-seen')){$('arrival').showModal();localStorage.setItem('last-city-arrival-seen','1');}}catch(e){$('arrival').showModal();}

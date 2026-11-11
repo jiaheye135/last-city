@@ -45,3 +45,5 @@ main,.layout,.world,#event,.event-card,.mission-copy{min-width:0;max-width:100%}
  body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none}
  input,textarea,select,[contenteditable="true"],[contenteditable=""],[role="textbox"]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 }
+
+#map{background:#25434a}
