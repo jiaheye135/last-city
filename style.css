@@ -31,3 +31,10 @@ button,select{min-height:44px}button{touch-action:manipulation}#map{touch-action
 
 /* Keep page panning, while reserving pinch gestures for the game camera. */
 html,body{touch-action:pan-x pan-y}
+
+/* Avoid mobile text inflation; controls must not trigger focus auto-zoom. */
+html,body{width:100%;max-width:100%;touch-action:pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:clip}
+main,.layout,.world,#event,.event-card,.mission-copy{min-width:0;max-width:100%}
+.event-card p,.event-card button,.event-card h3{overflow-wrap:anywhere}
+#restore-page-view{position:fixed;z-index:10000;min-height:48px;padding:10px 16px;background:#fff0c3;color:#142e35;border:2px solid #f0c569;box-shadow:0 4px 24px #00182088;font-size:16px;font-weight:700;touch-action:pan-y}
+@media(max-width:700px){input,select,textarea{font-size:16px!important}button,a,input,select,textarea,label{touch-action:pan-y}#map{touch-action:none}#event{padding-left:12px;padding-right:12px}.event-card{width:100%;max-width:100%}}

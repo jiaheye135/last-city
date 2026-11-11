@@ -98,17 +98,3 @@ $('tutorial-locate').onclick=()=>{if(!tutorial)return;let target=document.queryS
 
 window.addEventListener('resize',resize);document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});render();resize();draw();
 try{$('arrival-load').hidden=!localStorage.getItem('last-city-v1');if(!localStorage.getItem('last-city-arrival-seen')){$('arrival').showModal();localStorage.setItem('last-city-arrival-seen','1');}}catch(e){$('arrival').showModal();}
-
-// Suppress browser zoom gestures. The canvas keeps its own camera zoom handler.
-for(const eventName of ['gesturestart','gesturechange']){
- document.addEventListener(eventName,event=>event.preventDefault(),{passive:false});
-}
-document.addEventListener('wheel',event=>{
- if(event.ctrlKey||event.metaKey)event.preventDefault();
-},{passive:false});
-document.addEventListener('keydown',event=>{
- if((event.ctrlKey||event.metaKey)&&['+','-','=','0','Add','Subtract'].includes(event.key))event.preventDefault();
-});
-document.addEventListener('touchmove',event=>{
- if(event.touches.length>1&&!event.target.closest('#map'))event.preventDefault();
-},{passive:false});
