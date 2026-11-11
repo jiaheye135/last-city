@@ -1,0 +1,12 @@
+'use strict';
+const assert=require('node:assert/strict'),C=require('../camera.js');
+let c=C.create(),w=390,h=340,a=C.layout(c,w,h),px=170,py=180;
+const tilePoint={x:(px-a.ox)/a.scale,y:(py-a.oy)/a.scale};
+C.zoomAt(c,1.5,px,py,w,h);let b=C.layout(c,w,h);
+assert(Math.abs(b.ox+tilePoint.x*b.scale-px)<1e-8);
+assert(Math.abs(b.oy+tilePoint.y*b.scale-py)<1e-8);
+C.zoomAt(c,100,px,py,w,h);assert.equal(c.zoom,3);
+C.zoomAt(c,.0001,px,py,w,h);assert.equal(c.zoom,1);
+C.pan(c,1e5,-1e5,w,h);assert.equal(c.x,w*.8);assert.equal(c.y,-h*.8);
+assert.equal(C.layout(C.create(),w,h).ox,w/2);
+console.log('PASS camera: anchored zoom, limits, bounded pan, reset');

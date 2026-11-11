@@ -1,0 +1,23 @@
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Local credentials and configuration
+.env
+.env.*
+!.env.example
+
+# Generated output and local dependencies
+node_modules/
+coverage/
+*.log
+*.zip
+
+# Player save exports (not project source)
+last-city-day-*.json
+saves/
+
+# Godot local editor cache, if a 3D prototype is added later
+.godot/
