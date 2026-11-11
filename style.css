@@ -28,3 +28,6 @@ button,select{min-height:44px}button{touch-action:manipulation}#map{touch-action
 @media(max-width:360px){.right #people{grid-template-columns:repeat(5,minmax(0,1fr))}.mission{grid-template-columns:1fr}.mission button{width:100%}}
 
 @media(max-width:700px){.milestone{position:fixed;top:auto;bottom:max(12px,env(safe-area-inset-bottom));left:12px;right:12px;max-width:none;z-index:15;box-shadow:0 8px 36px #001822aa}.milestone h2{font-size:23px}.milestone button{min-height:44px}}
+
+/* Keep page panning, while reserving pinch gestures for the game camera. */
+html,body{touch-action:pan-x pan-y}
