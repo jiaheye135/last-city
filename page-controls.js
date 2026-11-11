@@ -28,6 +28,21 @@ document.addEventListener('touchcancel',()=>{touch=null;lastTap=null;},options);
 // Bubble after the canvas's wheel listener so camera zoom continues to work.
 document.addEventListener('wheel',event=>{if(event.ctrlKey||event.metaKey)event.preventDefault();},{passive:false});
 document.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&['+','-','=','0','Add','Subtract'].includes(event.key))event.preventDefault();});
+// Suppress native text/page menus only in the mobile game layout.
+// Form fields retain their native editing, selection and clipboard actions.
+const mobileGame=()=>window.matchMedia?.('(max-width: 700px), (pointer: coarse)')?.matches===true;
+function editable(node){return !!(node?.closest?.('input,textarea,select,[contenteditable="true"],[contenteditable=""],[role="textbox"]')||node?.parentElement?.closest?.('input,textarea,select,[contenteditable="true"],[contenteditable=""],[role="textbox"]'));}
+function gameSurface(event){return mobileGame()&&!editable(event.target)&&!editable(document.activeElement);}
+for(const name of ['selectstart','contextmenu','dragstart','copy','cut','paste']){
+ document.addEventListener(name,event=>{if(gameSurface(event))event.preventDefault();},options);
+}
+document.addEventListener('selectionchange',()=>{
+ if(!mobileGame()||editable(document.activeElement))return;
+ const selection=window.getSelection?.();if(selection?.rangeCount)selection.removeAllRanges();
+});
+document.addEventListener('keydown',event=>{
+ if(gameSurface(event)&&(event.ctrlKey||event.metaKey)&&['a','c','x','v'].includes(event.key.toLowerCase()))event.preventDefault();
+},options);
 function prepareRecovery(){
  const viewport=window.visualViewport;if(!viewport)return;
  const button=document.createElement('button');button.id='restore-page-view';button.type='button';button.textContent='恢復正常顯示';button.hidden=true;button.title='重新開啟目前網址；已儲存的城市進度仍可讀取';document.body.append(button);
