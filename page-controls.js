@@ -4,7 +4,10 @@
 const outsideMap=target=>!target?.closest?.('#map');
 const options={passive:false,capture:true};
 let touch=null,lastTap=null;
-for(const name of ['gesturestart','gesturechange'])document.addEventListener(name,event=>event.preventDefault(),options);
+for(const name of ['gesturestart','gesturechange','gestureend']){
+ const block=event=>event.preventDefault();
+ window.addEventListener?.(name,block,options);document.addEventListener(name,block,options);
+}
 document.addEventListener('touchstart',event=>{
  const first=event.touches[0];
  touch=first?{x:first.clientX,y:first.clientY,moved:false,multi:event.touches.length>1}:null;
@@ -18,10 +21,11 @@ document.addEventListener('touchmove',event=>{
 },options);
 document.addEventListener('touchend',event=>{
  if(!touch||touch.moved||touch.multi||event.touches.length||!outsideMap(event.target)){lastTap=null;return;}
- // Keep native activation of controls; prevent smart-zoom double taps on text.
- const now=event.timeStamp,interactive=event.target?.closest?.('button,input,select,textarea,a,label');
- if(!interactive&&lastTap&&now-lastTap.time<300&&Math.hypot(touch.x-lastTap.x,touch.y-lastTap.y)<24){event.preventDefault();lastTap=null;}
- else lastTap={time:now,x:touch.x,y:touch.y};
+ // Buttons must not be a loophole for browser smart zoom. Native fields stay editable.
+ const now=event.timeStamp;
+ if(editable(event.target)){lastTap=null;touch=null;return;}
+ if(lastTap&&now>=lastTap.time&&now-lastTap.time<450&&Math.hypot(touch.x-lastTap.x,touch.y-lastTap.y)<32)event.preventDefault();
+ lastTap={time:now,x:touch.x,y:touch.y};
  touch=null;
 },options);
 document.addEventListener('touchcancel',()=>{touch=null;lastTap=null;},options);
